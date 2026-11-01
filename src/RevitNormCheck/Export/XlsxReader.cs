@@ -15,31 +15,39 @@ namespace RevitNormCheck.Export
         private static readonly XNamespace Rel = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
         private static readonly XNamespace PkgRel = "http://schemas.openxmlformats.org/package/2006/relationships";
 
-        public static List<string[]> ReadFirstSheet(string path)
+        public static List<string[]> ReadFirstSheet(string path) => ReadSheets(path).First().Value;
+
+        // Все листы книги: название и таблица строк.
+        public static List<KeyValuePair<string, List<string[]>>> ReadSheets(string path)
         {
             using (var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
             {
                 var shared = ReadSharedStrings(zip);
-                var sheetPath = FindFirstSheetPath(zip);
-                var sheet = Load(zip, sheetPath);
-                var rows = new List<string[]>();
+                var result = new List<KeyValuePair<string, List<string[]>>>();
 
-                foreach (var row in sheet.Descendants(Main + "row"))
+                foreach (var sheetInfo in FindSheets(zip))
                 {
-                    var cells = new Dictionary<int, string>();
-                    var max = -1;
-                    foreach (var cell in row.Elements(Main + "c"))
+                    var sheet = Load(zip, sheetInfo.Value);
+                    var rows = new List<string[]>();
+
+                    foreach (var row in sheet.Descendants(Main + "row"))
                     {
-                        var index = ColumnIndex((string)cell.Attribute("r"));
-                        cells[index] = CellText(cell, shared);
-                        if (index > max) max = index;
+                        var cells = new Dictionary<int, string>();
+                        var max = -1;
+                        foreach (var cell in row.Elements(Main + "c"))
+                        {
+                            var index = ColumnIndex((string)cell.Attribute("r"));
+                            cells[index] = CellText(cell, shared);
+                            if (index > max) max = index;
+                        }
+                        var values = new string[max + 1];
+                        for (int i = 0; i <= max; i++) values[i] = cells.ContainsKey(i) ? cells[i] : "";
+                        rows.Add(values);
                     }
-                    var values = new string[max + 1];
-                    for (int i = 0; i <= max; i++) values[i] = cells.ContainsKey(i) ? cells[i] : "";
-                    rows.Add(values);
+                    result.Add(new KeyValuePair<string, List<string[]>>(sheetInfo.Key, rows));
                 }
-                return rows;
+                return result;
             }
         }
 
@@ -69,17 +77,24 @@ namespace RevitNormCheck.Export
             return result;
         }
 
-        private static string FindFirstSheetPath(ZipArchive zip)
+        // Название листа и путь к его xml внутри архива, в порядке книги.
+        private static List<KeyValuePair<string, string>> FindSheets(ZipArchive zip)
         {
             var workbook = Load(zip, "xl/workbook.xml");
-            var first = workbook.Descendants(Main + "sheet").FirstOrDefault();
-            var id = (string)first?.Attribute(Rel + "id");
             var rels = Load(zip, "xl/_rels/workbook.xml.rels");
-            var target = rels.Descendants(PkgRel + "Relationship")
-                .Where(r => (string)r.Attribute("Id") == id)
-                .Select(r => (string)r.Attribute("Target"))
-                .FirstOrDefault() ?? "worksheets/sheet1.xml";
-            return target.StartsWith("/") ? target.TrimStart('/') : "xl/" + target;
+            var targets = rels.Descendants(PkgRel + "Relationship")
+                .ToDictionary(r => (string)r.Attribute("Id"), r => (string)r.Attribute("Target"));
+
+            var list = new List<KeyValuePair<string, string>>();
+            foreach (var sheet in workbook.Descendants(Main + "sheet"))
+            {
+                var id = (string)sheet.Attribute(Rel + "id");
+                string target;
+                if (id == null || !targets.TryGetValue(id, out target)) continue;
+                var path = target.StartsWith("/") ? target.TrimStart('/') : "xl/" + target;
+                list.Add(new KeyValuePair<string, string>((string)sheet.Attribute("name"), path));
+            }
+            return list;
         }
 
         private static XDocument Load(ZipArchive zip, string name)
