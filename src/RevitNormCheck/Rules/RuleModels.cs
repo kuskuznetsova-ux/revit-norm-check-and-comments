@@ -18,8 +18,14 @@ namespace RevitNormCheck.Rules
         [DataMember(Name = "check")] public string Check { get; set; }
         [DataMember(Name = "title")] public string Title { get; set; }
         [DataMember(Name = "document")] public string Document { get; set; }
+
+        // Редакция документа, например «2020, изм. 1». Правило относится только к ней.
+        [DataMember(Name = "edition")] public string Edition { get; set; }
         [DataMember(Name = "clause")] public string Clause { get; set; }
         [DataMember(Name = "quote")] public string Quote { get; set; }
+
+        // Контрольная сумма текста цитаты на момент составления правила.
+        [DataMember(Name = "quoteHash")] public string QuoteHash { get; set; }
 
         // Минимальная ширина в мм (двери, марши).
         [DataMember(Name = "minWidthMm")] public double? MinWidthMm { get; set; }
