@@ -32,14 +32,14 @@ namespace RevitNormCheck.UI
         {
             { CheckCategory.Norms, "A. Нормы (эвакуация, огнестойкость, доступность)" },
             { CheckCategory.CompanyStandards, "B. Стандарты компании" },
-            { CheckCategory.Documentation, "C. Состав и оформление, АР, стадия П (для экспертизы)" },
+            { CheckCategory.Documentation, "C. Стандарты АГР, «Строим просто», ДГП" },
         };
 
         private static readonly Dictionary<CheckCategory, string> FolderHints = new Dictionary<CheckCategory, string>
         {
             { CheckCategory.Norms, "Папка с нормами (PDF)" },
             { CheckCategory.CompanyStandards, "Папка со стандартами компании (PDF)" },
-            { CheckCategory.Documentation, "Папка с требованиями к составу и оформлению (PDF)" },
+            { CheckCategory.Documentation, "Папка со стандартами АГР, «Строим просто», ДГП (PDF)" },
         };
 
         public CheckWindow(UIApplication uiApp)
@@ -180,16 +180,37 @@ namespace RevitNormCheck.UI
             buttons.Children.Add(none);
             panel.Children.Add(buttons);
 
-            foreach (var check in CheckDefinition.All.Where(c => c.Category == category))
+            foreach (var group in CheckDefinition.All.Where(c => c.Category == category).GroupBy(c => c.SubGroup))
             {
-                var box = new CheckBox
+                var indent = 0.0;
+                if (group.Key != null)
                 {
-                    Content = check.Title,
-                    Margin = new Thickness(0, 2, 0, 2),
-                    IsChecked = _settings.EnabledCheckIds.Contains(check.Id)
-                };
-                _boxes[check.Id] = box;
-                panel.Children.Add(box);
+                    var members = group.ToList();
+                    var header = new CheckBox
+                    {
+                        Content = group.Key,
+                        FontWeight = FontWeights.SemiBold,
+                        Margin = new Thickness(0, 8, 0, 2)
+                    };
+                    header.Click += (s, e) =>
+                    {
+                        foreach (var m in members) _boxes[m.Id].IsChecked = header.IsChecked == true;
+                    };
+                    panel.Children.Add(header);
+                    indent = 20;
+                }
+
+                foreach (var check in group)
+                {
+                    var box = new CheckBox
+                    {
+                        Content = check.Title,
+                        Margin = new Thickness(indent, 2, 0, 2),
+                        IsChecked = _settings.EnabledCheckIds.Contains(check.Id)
+                    };
+                    _boxes[check.Id] = box;
+                    panel.Children.Add(box);
+                }
             }
 
             Root.Children.Add(new GroupBox { Header = Titles[category], Content = panel, Margin = new Thickness(0, 0, 0, 12) });
