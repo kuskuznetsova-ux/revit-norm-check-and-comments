@@ -15,10 +15,20 @@ namespace RevitNormCheck.Corpus
         // Начало пункта: «4.2.18 Текст». Только номера с точкой, чтобы не принимать за пункты заголовки разделов.
         private static readonly Regex ClauseStart = new Regex(@"^(\d{1,2}(?:\.\d+)+)\.?\s+(?=\S)", RegexOptions.Compiled);
 
+        public const int ParserVersion = 2;
+
+        // Даты вида «18.05.2026» не пункты.
+        private static readonly Regex DateLike = new Regex(@"^\d{1,2}\.\d{1,2}\.\d{4}$", RegexOptions.Compiled);
+
+        // Колонтитулы справочных систем, попадающие в текст страниц.
+        private static readonly Regex NoiseLine = new Regex(
+            @"(Система\s+ГАРАНТ|КонсультантПлюс|^Внимание!\s+Документ\s+включен)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         public static CorpusFile Build(string folder, IProgress<string> progress)
         {
-            var previous = CorpusStore.Load(folder);
-            var corpus = new CorpusFile { Built = DateTime.Now.ToString("yyyy-MM-dd HH:mm") };
+            var loaded = CorpusStore.Load(folder);
+            var previous = loaded != null && loaded.Version == ParserVersion ? loaded : null;
+            var corpus = new CorpusFile { Version = ParserVersion, Built = DateTime.Now.ToString("yyyy-MM-dd HH:mm") };
             var files = Directory.EnumerateFiles(folder, "*.pdf", SearchOption.AllDirectories).ToList();
 
             for (int i = 0; i < files.Count; i++)
@@ -84,8 +94,10 @@ namespace RevitNormCheck.Corpus
                 {
                     foreach (var line in Lines(page))
                     {
+                        if (NoiseLine.IsMatch(line)) continue;
+
                         var match = ClauseStart.Match(line);
-                        if (match.Success)
+                        if (match.Success && !DateLike.IsMatch(match.Groups[1].Value))
                         {
                             flush();
                             current = new CorpusClause { Number = match.Groups[1].Value, Page = page.Number };

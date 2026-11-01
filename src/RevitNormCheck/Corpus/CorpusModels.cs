@@ -6,6 +6,8 @@ namespace RevitNormCheck.Corpus
     [DataContract]
     public class CorpusFile
     {
+        // Версия разбора: при её изменении корпус пересобирается заново, а не берётся из кэша.
+        [DataMember(Name = "version")] public int Version { get; set; }
         [DataMember(Name = "built")] public string Built { get; set; }
         [DataMember(Name = "documents")] public List<CorpusDocument> Documents { get; set; } = new List<CorpusDocument>();
     }
