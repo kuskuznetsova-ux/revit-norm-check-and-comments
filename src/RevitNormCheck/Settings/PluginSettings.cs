@@ -10,6 +10,8 @@ namespace RevitNormCheck.Settings
     public class PluginSettings
     {
         [DataMember] public string NormsFolder { get; set; } = "";
+        [DataMember] public string CompanyStandardsFolder { get; set; } = "";
+        [DataMember] public string DocumentationFolder { get; set; } = "";
         [DataMember] public List<string> EnabledCheckIds { get; set; } = new List<string>();
 
         private static string FilePath => Path.Combine(
