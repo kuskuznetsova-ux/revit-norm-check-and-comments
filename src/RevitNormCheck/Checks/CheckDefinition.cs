@@ -29,10 +29,6 @@ namespace RevitNormCheck.Checks
         private const string Mgn = "A.3 Доступность для МГН";
         private const string Parking = "A.4 Стоянки автомобилей";
 
-        private const string Agr = "C.1 АГР (mos.ru)";
-        private const string Simple = "C.2 «Строим просто»";
-        private const string Dgp = "C.3 ДГП";
-        private const string General = "C.0 Общее оформление листов";
 
         // Нумерация совпадает с docs/RULES.md.
         public static IReadOnlyList<CheckDefinition> All { get; } = new List<CheckDefinition>
@@ -70,16 +66,14 @@ namespace RevitNormCheck.Checks
             new CheckDefinition("std-masonry", "B7. Типы кладки и стен", CheckCategory.CompanyStandards),
             new CheckDefinition("std-windows-doors", "B8. Типы окон и дверей", CheckCategory.CompanyStandards),
 
-            // C. Стандарты АГР, «Строим просто», ДГП
-            new CheckDefinition("doc-sheets-set", "C.0.1 Состав листов раздела АР", CheckCategory.Documentation, General),
-            new CheckDefinition("doc-title-block", "C.0.2 Заполнение основной надписи", CheckCategory.Documentation, General),
-            new CheckDefinition("doc-plan-elements", "C.0.3 Обязательные элементы на планах (оси, отметки, размеры, номера помещений)", CheckCategory.Documentation, General),
-            new CheckDefinition("doc-sections-facades", "C.0.4 Разрезы и фасады: отметки, размеры, обозначения", CheckCategory.Documentation, General),
-            new CheckDefinition("doc-explication", "C.0.5 Экспликации и ведомости помещений, площади", CheckCategory.Documentation, General),
-            new CheckDefinition("doc-scales-annotations", "C.0.6 Масштабы, выноски, марки, условные обозначения", CheckCategory.Documentation, General),
-            new CheckDefinition("agr", "C.1.1 Соответствие стандарту АГР (набор проверок наполняется из PDF)", CheckCategory.Documentation, Agr),
-            new CheckDefinition("simple", "C.2.1 Соответствие требованиям «Строим просто» (набор проверок наполняется из PDF)", CheckCategory.Documentation, Simple),
-            new CheckDefinition("dgp", "C.3.1 Соответствие требованиям ДГП (набор проверок наполняется из PDF)", CheckCategory.Documentation, Dgp),
+            // C. Стандарты АГР (mos.ru), «Строим просто», ДГП: все в одной папке
+            new CheckDefinition("doc-sheets-set", "C1. Состав листов раздела АР", CheckCategory.Documentation),
+            new CheckDefinition("doc-title-block", "C2. Заполнение основной надписи", CheckCategory.Documentation),
+            new CheckDefinition("doc-plan-elements", "C3. Обязательные элементы на планах (оси, отметки, размеры, номера помещений)", CheckCategory.Documentation),
+            new CheckDefinition("doc-sections-facades", "C4. Разрезы и фасады: отметки, размеры, обозначения", CheckCategory.Documentation),
+            new CheckDefinition("doc-explication", "C5. Экспликации и ведомости помещений, площади", CheckCategory.Documentation),
+            new CheckDefinition("doc-scales-annotations", "C6. Масштабы, выноски, марки, условные обозначения", CheckCategory.Documentation),
+            new CheckDefinition("doc-standards", "C7. Требования из стандартов в папке (набор наполняется из PDF)", CheckCategory.Documentation),
         };
     }
 }
