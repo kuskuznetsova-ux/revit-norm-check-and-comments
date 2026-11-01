@@ -14,6 +14,7 @@
         </ScrollViewer>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Выгрузить двери в Excel" Padding="16,5" Margin="0,0,24,0" Click="ExportDoorsClick"/>
             <Button Content="Проверить" Padding="16,5" Click="RunClick" IsDefault="True"/>
             <Button Content="Закрыть" Padding="16,5" Margin="8,0,0,0" Click="CloseClick" IsCancel="True"/>
         </StackPanel>
