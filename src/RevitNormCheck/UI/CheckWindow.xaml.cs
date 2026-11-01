@@ -109,7 +109,7 @@ namespace RevitNormCheck.UI
                 foreach (var item in _scopeItems)
                     item.Box.Visibility = text.Length == 0 ||
                         item.Title.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0
-                        ? Visibility.Visible : Visibility.Collapsed;
+                        ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
             };
 
             RoutedEventHandler modeChanged = (s, e) => _scopeList.IsEnabled = _modeSelected.IsChecked == true;
