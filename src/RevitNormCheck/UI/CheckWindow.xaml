@@ -13,11 +13,13 @@
             <StackPanel x:Name="Root"/>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-            <Button Content="Правила в Excel" Padding="10,5" Margin="0,0,8,0" Click="ExportRulesClick"/>
-            <Button Content="Правила из Excel" Padding="10,5" Margin="0,0,24,0" Click="ImportRulesClick"/>
+        <WrapPanel Grid.Row="1" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Подготовить нормы" Padding="10,5" Margin="0,0,8,6" Click="BuildCorpusClick"/>
+            <Button Content="Поиск по нормам" Padding="10,5" Margin="0,0,24,6" Click="SearchCorpusClick"/>
+            <Button Content="Правила в Excel" Padding="10,5" Margin="0,0,8,6" Click="ExportRulesClick"/>
+            <Button Content="Правила из Excel" Padding="10,5" Margin="0,0,24,6" Click="ImportRulesClick"/>
             <Button Content="Проверить" Padding="16,5" Click="RunClick" IsDefault="True"/>
             <Button Content="Закрыть" Padding="16,5" Margin="8,0,0,0" Click="CloseClick" IsCancel="True"/>
-        </StackPanel>
+        </WrapPanel>
     </Grid>
 </Window>

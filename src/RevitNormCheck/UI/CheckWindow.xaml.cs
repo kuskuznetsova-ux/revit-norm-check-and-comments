@@ -6,7 +6,9 @@ using System.Windows;
 using System.Windows.Controls;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using System.Threading.Tasks;
 using RevitNormCheck.Checks;
+using RevitNormCheck.Corpus;
 using RevitNormCheck.Reporting;
 using RevitNormCheck.Rules;
 using RevitNormCheck.Settings;
@@ -291,6 +293,52 @@ namespace RevitNormCheck.UI
             {
                 TaskDialog.Show("Проверка норм", "Ошибка: " + ex.Message);
             }
+        }
+
+        private async void BuildCorpusClick(object sender, RoutedEventArgs e)
+        {
+            if (!Directory.Exists(_settings.NormsFolder))
+            {
+                TaskDialog.Show("Проверка норм", "Сначала укажите папку с нормами (PDF).");
+                return;
+            }
+
+            var button = (Button)sender;
+            button.IsEnabled = false;
+            var progress = new Progress<string>(message => Title = "Проверка норм: " + message);
+            try
+            {
+                var folder = _settings.NormsFolder;
+                var corpus = await Task.Run(() => CorpusBuilder.Build(folder, progress));
+                CorpusStore.Save(folder, corpus);
+
+                var failed = corpus.Documents.Where(d => !string.IsNullOrEmpty(d.Error)).ToList();
+                var text = $"Документов: {corpus.Documents.Count}\nПунктов: {corpus.Documents.Sum(d => d.Clauses.Count)}";
+                if (failed.Count > 0)
+                    text += "\n\nНе удалось разобрать (" + failed.Count + "):\n" +
+                            string.Join("\n", failed.Take(10).Select(d => d.Name + ": " + d.Error));
+                TaskDialog.Show("Проверка норм", text);
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Проверка норм", "Ошибка: " + ex.Message);
+            }
+            finally
+            {
+                button.IsEnabled = true;
+                Title = "Проверка норм";
+            }
+        }
+
+        private void SearchCorpusClick(object sender, RoutedEventArgs e)
+        {
+            var corpus = CorpusStore.Load(_settings.NormsFolder);
+            if (corpus == null)
+            {
+                TaskDialog.Show("Проверка норм", "В папке нет corpus.json. Сначала нажмите «Подготовить нормы».");
+                return;
+            }
+            new CorpusSearchWindow(corpus) { Owner = this }.Show();
         }
 
         private void ExportRulesClick(object sender, RoutedEventArgs e)

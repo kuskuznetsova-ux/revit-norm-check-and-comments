@@ -28,8 +28,9 @@ namespace RevitNormCheck.Rules
             var sub = (rule.Subgroup ?? "").Trim();
             if (sub.StartsWith("A.1")) return "Пожарная безопасность";
             if (sub.StartsWith("A.2")) return "Жилые здания";
-            if (sub.StartsWith("A.3")) return "МГН";
-            if (sub.StartsWith("A.4")) return "Стоянки";
+            if (sub.StartsWith("A.3")) return "Общественные здания";
+            if (sub.StartsWith("A.4")) return "МГН";
+            if (sub.StartsWith("A.5")) return "Стоянки";
             return "Прочее";
         }
 

@@ -12,11 +12,16 @@ namespace RevitNormCheck.Rules
         public List<Rule> Rules { get; } = new List<Rule>();
         public List<string> Errors { get; } = new List<string>();
 
+        // Статус сверки правил с текстом норм и правила, исключённые из применения.
+        public Dictionary<string, RuleStatus> Status { get; } = new Dictionary<string, RuleStatus>();
+        public HashSet<string> Excluded { get; } = new HashSet<string>();
+        public bool CorpusLoaded { get; set; }
+
         public static bool IsApproved(Rule rule) => !string.IsNullOrWhiteSpace(rule.ApprovedBy);
 
         // Только утверждённые правила этой проверки.
         public List<Rule> For(string checkId) =>
-            Rules.Where(r => IsApproved(r) && string.Equals(r.Check, checkId, StringComparison.OrdinalIgnoreCase)).ToList();
+            Rules.Where(r => IsApproved(r) && !Excluded.Contains(r.Id) && string.Equals(r.Check, checkId, StringComparison.OrdinalIgnoreCase)).ToList();
 
         public List<Rule> Unapproved => Rules.Where(r => !IsApproved(r)).ToList();
     }

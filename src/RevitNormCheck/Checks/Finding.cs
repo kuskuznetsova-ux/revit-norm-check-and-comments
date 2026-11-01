@@ -6,6 +6,9 @@ namespace RevitNormCheck.Checks
         public const string NoData = "Нет данных";
         public const string NoRules = "Нет правил";
         public const string Unapproved = "Не утверждено";
+        public const string RuleChanged = "Правило: проверить";
+        public const string RuleMissing = "Правило: устарело";
+        public const string NotVerified = "Правила не сверены";
         public const string NotImplemented = "Не реализовано";
         public const string Error = "Ошибка проверки";
     }

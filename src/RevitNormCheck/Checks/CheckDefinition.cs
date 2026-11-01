@@ -24,10 +24,11 @@ namespace RevitNormCheck.Checks
             SubGroup = subGroup;
         }
 
-        private const string Fire = "A.1 Пожарные нормы";
-        private const string Design = "A.2 Проектирование жилых и общественных зданий";
-        private const string Mgn = "A.3 Доступность для МГН";
-        private const string Parking = "A.4 Стоянки автомобилей";
+        private const string Fire = "A.1 Пожарная безопасность";
+        private const string Residential = "A.2 Жилые здания";
+        private const string Public = "A.3 Общественные здания";
+        private const string Mgn = "A.4 МГН";
+        private const string Parking = "A.5 Стоянки";
 
 
         // Нумерация совпадает с docs/RULES.md.
@@ -46,15 +47,19 @@ namespace RevitNormCheck.Checks
             new CheckDefinition("fire-doors", "A.1.10 Противопожарные двери и тамбур-шлюзы", CheckCategory.Norms, Fire),
             new CheckDefinition("zones", "A.1.11 Разделение жилья, ДОО и ритейла противопожарными преградами", CheckCategory.Norms, Fire),
 
-            // A.2 Жилые и общественные здания
-            new CheckDefinition("stair-step", "A.2.1 Высота и ширина ступени, уклон марша", CheckCategory.Norms, Design),
-            new CheckDefinition("clear-height", "A.2.2 Высота помещений и в свету на путях эвакуации", CheckCategory.Norms, Design),
+            // A.2 Жилые здания
+            new CheckDefinition("res-stair-step", "A.2.1 Высота и ширина ступени, уклон марша", CheckCategory.Norms, Residential),
+            new CheckDefinition("res-clear-height", "A.2.2 Высота помещений и в свету на путях эвакуации", CheckCategory.Norms, Residential),
 
-            // A.3 МГН
-            new CheckDefinition("accessibility", "A.3.1 Проходы, пандусы, лифты, санузлы для МГН", CheckCategory.Norms, Mgn),
+            // A.3 Общественные здания (ДОО, ритейл)
+            new CheckDefinition("pub-stair-step", "A.3.1 Высота и ширина ступени, уклон марша", CheckCategory.Norms, Public),
+            new CheckDefinition("pub-clear-height", "A.3.2 Высота помещений и в свету на путях эвакуации", CheckCategory.Norms, Public),
 
-            // A.4 Стоянки
-            new CheckDefinition("parking", "A.4.1 Рампы, выезды, эвакуационные выходы, проезды", CheckCategory.Norms, Parking),
+            // A.4 МГН
+            new CheckDefinition("accessibility", "A.4.1 Проходы, пандусы, лифты, санузлы для МГН", CheckCategory.Norms, Mgn),
+
+            // A.5 Стоянки
+            new CheckDefinition("parking", "A.5.1 Рампы, выезды, эвакуационные выходы, проезды", CheckCategory.Norms, Parking),
 
             // B. Стандарты компании (список будет расширяться)
             new CheckDefinition("std-naming", "B1. Именование видов, листов, семейств и типов", CheckCategory.CompanyStandards),

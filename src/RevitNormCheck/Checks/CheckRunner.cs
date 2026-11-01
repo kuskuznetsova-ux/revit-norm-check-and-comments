@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.UI;
+using RevitNormCheck.Corpus;
 using RevitNormCheck.Export;
 using RevitNormCheck.Rules;
 using RevitNormCheck.Settings;
@@ -25,6 +26,38 @@ namespace RevitNormCheck.Checks
             var rules = selected.Any(c => c.Category == CheckCategory.Norms)
                 ? RuleLoader.Load(settings.NormsFolder)
                 : new RuleSet();
+            if (selected.Any(c => c.Category == CheckCategory.Norms) && rules.Rules.Count > 0)
+            {
+                var corpus = CorpusStore.Load(settings.NormsFolder);
+                rules.CorpusLoaded = corpus != null;
+                RuleVerifier.Apply(rules, corpus);
+
+                if (corpus == null)
+                {
+                    findings.Add(new Finding
+                    {
+                        CheckId = "rules", CheckTitle = "Сверка правил", Result = Results.NotVerified,
+                        Comment = "В папке с нормами нет corpus.json: правила не сверены с текстом. Нажмите «Подготовить нормы»."
+                    });
+                }
+                foreach (var rule in rules.Rules)
+                {
+                    RuleStatus status;
+                    if (!rules.Status.TryGetValue(rule.Id, out status)) continue;
+                    if (status != RuleStatus.Changed && status != RuleStatus.Missing) continue;
+                    findings.Add(new Finding
+                    {
+                        CheckId = rule.Check,
+                        CheckTitle = rule.Title ?? rule.Id,
+                        Result = status == RuleStatus.Changed ? Results.RuleChanged : Results.RuleMissing,
+                        Document = rule.Document, Clause = rule.Clause, Quote = rule.Quote,
+                        Comment = status == RuleStatus.Changed
+                            ? "Пункт найден, но цитаты в нём нет: норма могла измениться. Правило не применяется."
+                            : "Документа или пункта нет в папке с нормами. Правило не применяется."
+                    });
+                }
+            }
+
             var views = ScopeResolver.ResolveViews(uidoc, settings);
             var context = new CheckContext(doc, views, ScopeResolver.BuildViewToSheet(doc), rules);
 
