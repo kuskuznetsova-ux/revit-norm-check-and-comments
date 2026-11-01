@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>RevitNormCheck</Name>
+    <Assembly>RevitNormCheck/RevitNormCheck.dll</Assembly>
+    <FullClassName>RevitNormCheck.App</FullClassName>
+    <ClientId>5c0f6f4e-7d0b-4a52-9a3b-3a0c1b7e2d11</ClientId>
+    <VendorId>revit-norm-check</VendorId>
+    <VendorDescription>https://github.com/kuskuznetsova-ux/revit-norm-check-and-comments</VendorDescription>
+  </AddIn>
+</RevitAddIns>
