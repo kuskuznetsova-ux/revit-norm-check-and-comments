@@ -20,6 +20,10 @@ namespace RevitNormCheck.Rules
 
         // Подгруппа из списка проверок плагина, например "A.1".
         [DataMember(Name = "subgroup")] public string Subgroup { get; set; }
+
+        // Раздел для удобства просмотра: «Пожарная безопасность», «Жилые здания» и т.д.
+        // В Excel один раздел соответствует одной вкладке.
+        [DataMember(Name = "section")] public string Section { get; set; }
         [DataMember(Name = "document")] public string Document { get; set; }
 
         // Редакция документа, например «2020, изм. 1». Правило относится только к ней.

@@ -18,7 +18,8 @@
       "subgroup": "A.1",
       "edition": "ЗАПОЛНИТЬ",
       "approvedBy": "",
-      "approvedOn": ""
+      "approvedOn": "",
+      "section": "Пожарная безопасность"
     },
     {
       "id": "A.1.4-example",
@@ -37,7 +38,8 @@
       "subgroup": "A.1",
       "edition": "ЗАПОЛНИТЬ",
       "approvedBy": "",
-      "approvedOn": ""
+      "approvedOn": "",
+      "section": "Пожарная безопасность"
     },
     {
       "id": "A.1.3-example",
@@ -54,7 +56,8 @@
       "subgroup": "A.1",
       "edition": "ЗАПОЛНИТЬ",
       "approvedBy": "",
-      "approvedOn": ""
+      "approvedOn": "",
+      "section": "Пожарная безопасность"
     }
   ]
 }

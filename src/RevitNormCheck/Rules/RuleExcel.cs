@@ -11,28 +11,52 @@ namespace RevitNormCheck.Rules
     {
         private static readonly string[] Headers =
         {
-            "id", "Проверка", "Подгруппа", "Название", "Документ", "Редакция", "Пункт", "Цитата",
+            "id", "Проверка", "Раздел", "Подгруппа", "Название", "Документ", "Редакция", "Пункт", "Цитата",
             "Мин. ширина, мм", "Помещения содержат", "Тип содержит", "Уровень содержит",
             "Эвакуация из помещений", "Эвакуация в помещения", "Утвердил", "Дата"
         };
 
-        // Одна вкладка на документ: так проще проверять правила вручную.
+        private static readonly string[] SectionOrder =
+        {
+            "Пожарная безопасность", "Жилые здания", "Общественные здания", "МГН", "Стоянки"
+        };
+
+        // Раздел по умолчанию для правил без раздела: по подгруппе проверок.
+        private static string SectionOf(Rule rule)
+        {
+            if (!string.IsNullOrWhiteSpace(rule.Section)) return rule.Section.Trim();
+            var sub = (rule.Subgroup ?? "").Trim();
+            if (sub.StartsWith("A.1")) return "Пожарная безопасность";
+            if (sub.StartsWith("A.2")) return "Жилые здания";
+            if (sub.StartsWith("A.3")) return "МГН";
+            if (sub.StartsWith("A.4")) return "Стоянки";
+            return "Прочее";
+        }
+
+        // Одна вкладка на раздел: так проще проверять правила вручную.
         public static void Export(string path, IList<Rule> rules)
         {
+            Func<string, int> order = name =>
+            {
+                var i = Array.IndexOf(SectionOrder, name);
+                return i < 0 ? SectionOrder.Length : i;
+            };
+
             var sheets = rules
-                .GroupBy(r => string.IsNullOrWhiteSpace(r.Document) ? "Без документа" : r.Document.Trim())
-                .OrderBy(g => g.Key)
+                .GroupBy(SectionOf)
+                .OrderBy(g => order(g.Key)).ThenBy(g => g.Key)
                 .Select(g => new SheetData
                 {
                     Name = g.Key,
                     Headers = Headers,
-                    Rows = g.Select(r => (IList<object>)new List<object>
-                    {
-                        r.Id, r.Check, r.Subgroup, r.Title, r.Document, r.Edition, r.Clause, r.Quote,
-                        r.MinWidthMm.HasValue ? (object)r.MinWidthMm.Value : "",
-                        Join(r.When?.RoomNameContains), Join(r.When?.TypeNameContains), Join(r.When?.LevelContains),
-                        Join(r.FromRoomNameContains), Join(r.ToRoomNameContains), r.ApprovedBy, r.ApprovedOn
-                    }).ToList()
+                    Rows = g.OrderBy(r => r.Document).ThenBy(r => r.Clause)
+                        .Select(r => (IList<object>)new List<object>
+                        {
+                            r.Id, r.Check, g.Key, r.Subgroup, r.Title, r.Document, r.Edition, r.Clause, r.Quote,
+                            r.MinWidthMm.HasValue ? (object)r.MinWidthMm.Value : "",
+                            Join(r.When?.RoomNameContains), Join(r.When?.TypeNameContains), Join(r.When?.LevelContains),
+                            Join(r.FromRoomNameContains), Join(r.ToRoomNameContains), r.ApprovedBy, r.ApprovedOn
+                        }).ToList()
                 })
                 .ToList();
             XlsxWriter.Write(path, sheets);
@@ -75,6 +99,7 @@ namespace RevitNormCheck.Rules
                     {
                         Id = id,
                         Check = get(row, "Проверка"),
+                        Section = get(row, "Раздел").Length > 0 ? get(row, "Раздел") : sheet.Key,
                         Subgroup = get(row, "Подгруппа"),
                         Title = get(row, "Название"),
                         Document = get(row, "Документ"),
