@@ -14,6 +14,10 @@ namespace RevitNormCheck.Settings
         [DataMember] public string DocumentationFolder { get; set; } = "";
         [DataMember] public List<string> EnabledCheckIds { get; set; } = new List<string>();
 
+        // "CurrentView", "Selected" или "WholeModel".
+        [DataMember] public string ScopeMode { get; set; } = "CurrentView";
+        [DataMember] public List<string> ScopeUniqueIds { get; set; } = new List<string>();
+
         private static string FilePath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "RevitNormCheck", "settings.json");

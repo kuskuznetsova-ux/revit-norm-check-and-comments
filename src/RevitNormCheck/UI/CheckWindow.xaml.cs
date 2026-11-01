@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using RevitNormCheck.Checks;
 using RevitNormCheck.Settings;
@@ -16,6 +17,16 @@ namespace RevitNormCheck.UI
         private readonly PluginSettings _settings;
         private readonly Dictionary<string, CheckBox> _boxes = new Dictionary<string, CheckBox>();
         private readonly Dictionary<CheckCategory, TextBox> _pathBoxes = new Dictionary<CheckCategory, TextBox>();
+        private readonly List<ScopeItem> _scopeItems = new List<ScopeItem>();
+        private RadioButton _modeCurrent, _modeSelected, _modeWhole;
+        private UIElement _scopeList;
+
+        private class ScopeItem
+        {
+            public string UniqueId;
+            public string Title;
+            public CheckBox Box;
+        }
 
         private static readonly Dictionary<CheckCategory, string> Titles = new Dictionary<CheckCategory, string>
         {
@@ -39,7 +50,88 @@ namespace RevitNormCheck.UI
 
             foreach (CheckCategory category in Enum.GetValues(typeof(CheckCategory)))
                 BuildSection(category);
+            BuildScopeSection();
         }
+
+        private void BuildScopeSection()
+        {
+            var panel = new StackPanel { Margin = new Thickness(8) };
+
+            _modeCurrent = new RadioButton { Content = "Текущий вид или лист", Margin = new Thickness(0, 2, 0, 2) };
+            _modeSelected = new RadioButton { Content = "Выбранные листы и виды", Margin = new Thickness(0, 2, 0, 2) };
+            _modeWhole = new RadioButton { Content = "Вся модель", Margin = new Thickness(0, 2, 0, 2) };
+            _modeCurrent.IsChecked = _settings.ScopeMode == "CurrentView";
+            _modeSelected.IsChecked = _settings.ScopeMode == "Selected";
+            _modeWhole.IsChecked = _settings.ScopeMode == "WholeModel";
+            if (_modeCurrent.IsChecked != true && _modeSelected.IsChecked != true && _modeWhole.IsChecked != true)
+                _modeCurrent.IsChecked = true;
+            panel.Children.Add(_modeCurrent);
+            panel.Children.Add(_modeSelected);
+            panel.Children.Add(_modeWhole);
+
+            var filter = new TextBox { Margin = new Thickness(0, 8, 0, 4), Padding = new Thickness(4) };
+            filter.ToolTip = "Фильтр по названию или номеру";
+            panel.Children.Add(new TextBlock { Text = "Листы и виды (фильтр по названию):" });
+            panel.Children.Add(filter);
+
+            var list = new StackPanel();
+            var scroll = new ScrollViewer { MaxHeight = 240, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = list };
+            _scopeList = scroll;
+            panel.Children.Add(scroll);
+
+            var doc = _uiApp.ActiveUIDocument.Document;
+
+            list.Children.Add(new TextBlock { Text = "Листы", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 4, 0, 2) });
+            var sheets = new FilteredElementCollector(doc).OfClass(typeof(ViewSheet)).Cast<ViewSheet>()
+                .OrderBy(v => v.SheetNumber);
+            foreach (var sheet in sheets)
+                AddScopeItem(list, sheet.UniqueId, $"{sheet.SheetNumber} - {sheet.Name}");
+
+            list.Children.Add(new TextBlock { Text = "Виды", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 8, 0, 2) });
+            var allowed = new HashSet<ViewType>
+            {
+                ViewType.FloorPlan, ViewType.CeilingPlan, ViewType.EngineeringPlan, ViewType.AreaPlan,
+                ViewType.Section, ViewType.Elevation, ViewType.Detail, ViewType.ThreeD
+            };
+            var views = new FilteredElementCollector(doc).OfClass(typeof(View)).Cast<View>()
+                .Where(v => !v.IsTemplate && allowed.Contains(v.ViewType))
+                .OrderBy(v => v.ViewType.ToString()).ThenBy(v => v.Name);
+            foreach (var view in views)
+                AddScopeItem(list, view.UniqueId, $"{view.Name} ({view.ViewType})");
+
+            filter.TextChanged += (s, e) =>
+            {
+                var text = filter.Text.Trim();
+                foreach (var item in _scopeItems)
+                    item.Box.Visibility = text.Length == 0 ||
+                        item.Title.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0
+                        ? Visibility.Visible : Visibility.Collapsed;
+            };
+
+            RoutedEventHandler modeChanged = (s, e) => _scopeList.IsEnabled = _modeSelected.IsChecked == true;
+            _modeCurrent.Checked += modeChanged;
+            _modeSelected.Checked += modeChanged;
+            _modeWhole.Checked += modeChanged;
+            _scopeList.IsEnabled = _modeSelected.IsChecked == true;
+
+            Root.Children.Add(new GroupBox { Header = "Что проверять на чертеже: листы и виды", Content = panel, Margin = new Thickness(0, 0, 0, 12) });
+        }
+
+        private void AddScopeItem(StackPanel list, string uniqueId, string title)
+        {
+            var box = new CheckBox
+            {
+                Content = title,
+                Margin = new Thickness(0, 1, 0, 1),
+                IsChecked = _settings.ScopeUniqueIds.Contains(uniqueId)
+            };
+            _scopeItems.Add(new ScopeItem { UniqueId = uniqueId, Title = title, Box = box });
+            list.Children.Add(box);
+        }
+
+        private string CurrentScopeMode() =>
+            _modeSelected.IsChecked == true ? "Selected" :
+            _modeWhole.IsChecked == true ? "WholeModel" : "CurrentView";
 
         private string GetFolder(CheckCategory category)
         {
@@ -147,6 +239,12 @@ namespace RevitNormCheck.UI
                 }
             }
 
+            if (_settings.ScopeMode == "Selected" && _settings.ScopeUniqueIds.Count == 0)
+            {
+                TaskDialog.Show("Проверка норм", "Отметьте листы или виды для проверки.");
+                return;
+            }
+
             // Сами проверки и выгрузка в Excel добавляются следующим шагом.
             TaskDialog.Show("Проверка норм",
                 $"Выбрано проверок: {_settings.EnabledCheckIds.Count}\n\nЗапуск проверок пока не реализован.");
@@ -163,6 +261,8 @@ namespace RevitNormCheck.UI
         private void SaveSettings()
         {
             _settings.EnabledCheckIds = _boxes.Where(p => p.Value.IsChecked == true).Select(p => p.Key).ToList();
+            _settings.ScopeMode = CurrentScopeMode();
+            _settings.ScopeUniqueIds = _scopeItems.Where(i => i.Box.IsChecked == true).Select(i => i.UniqueId).ToList();
             _settings.Save();
         }
     }
