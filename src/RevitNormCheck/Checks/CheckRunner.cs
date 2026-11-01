@@ -31,6 +31,19 @@ namespace RevitNormCheck.Checks
             foreach (var error in rules.Errors)
                 findings.Add(new Finding { CheckId = "rules", CheckTitle = "Файл правил", Result = Results.Error, Comment = error });
 
+            var unapproved = rules.Unapproved;
+            if (unapproved.Count > 0)
+            {
+                findings.Add(new Finding
+                {
+                    CheckId = "rules",
+                    CheckTitle = "Файл правил",
+                    Result = Results.Unapproved,
+                    Comment = "Не применяются неутверждённые правила (" + unapproved.Count + "): " +
+                              string.Join(", ", unapproved.Select(r => r.Id))
+                });
+            }
+
             foreach (var definition in selected)
             {
                 var check = Implemented.FirstOrDefault(c => c.Id == definition.Id);

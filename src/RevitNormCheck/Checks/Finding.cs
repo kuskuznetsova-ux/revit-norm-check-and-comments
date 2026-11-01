@@ -5,6 +5,7 @@ namespace RevitNormCheck.Checks
         public const string Violation = "Нарушение";
         public const string NoData = "Нет данных";
         public const string NoRules = "Нет правил";
+        public const string Unapproved = "Не утверждено";
         public const string NotImplemented = "Не реализовано";
         public const string Error = "Ошибка проверки";
     }

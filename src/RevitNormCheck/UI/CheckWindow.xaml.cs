@@ -8,6 +8,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using RevitNormCheck.Checks;
 using RevitNormCheck.Reporting;
+using RevitNormCheck.Rules;
 using RevitNormCheck.Settings;
 
 // У Revit API есть одноимённые типы, поэтому явно выбираем WPF.
@@ -284,6 +285,73 @@ namespace RevitNormCheck.UI
                     ReportWriter.Write(dialog.FileName, findings);
                     TaskDialog.Show("Проверка норм", ReportWriter.Summary(findings) + "\n\n" + dialog.FileName);
                     try { System.Diagnostics.Process.Start(dialog.FileName); } catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Проверка норм", "Ошибка: " + ex.Message);
+            }
+        }
+
+        private void ExportRulesClick(object sender, RoutedEventArgs e)
+        {
+            if (!Directory.Exists(_settings.NormsFolder))
+            {
+                TaskDialog.Show("Проверка норм", "Сначала укажите папку с нормами (в ней лежит rules.json).");
+                return;
+            }
+
+            try
+            {
+                var set = RuleLoader.Load(_settings.NormsFolder);
+                if (set.Rules.Count == 0)
+                {
+                    TaskDialog.Show("Проверка норм", "Правил нет. " + string.Join("\n", set.Errors));
+                    return;
+                }
+
+                using (var dialog = new System.Windows.Forms.SaveFileDialog())
+                {
+                    dialog.Filter = "Excel (*.xlsx)|*.xlsx";
+                    dialog.FileName = "Правила_" + DateTime.Now.ToString("yyyy-MM-dd") + ".xlsx";
+                    if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                    RuleExcel.Export(dialog.FileName, set.Rules);
+                    TaskDialog.Show("Проверка норм", "Правил выгружено: " + set.Rules.Count);
+                    try { System.Diagnostics.Process.Start(dialog.FileName); } catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Проверка норм", "Ошибка: " + ex.Message);
+            }
+        }
+
+        private void ImportRulesClick(object sender, RoutedEventArgs e)
+        {
+            if (!Directory.Exists(_settings.NormsFolder))
+            {
+                TaskDialog.Show("Проверка норм", "Сначала укажите папку с нормами: правила сохранятся в ней как rules.json.");
+                return;
+            }
+
+            try
+            {
+                using (var dialog = new System.Windows.Forms.OpenFileDialog())
+                {
+                    dialog.Filter = "Excel (*.xlsx)|*.xlsx";
+                    if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+                    var rules = RuleExcel.Import(dialog.FileName);
+
+                    var target = Path.Combine(_settings.NormsFolder, RuleLoader.FileName);
+                    if (File.Exists(target))
+                        File.Copy(target, target + "." + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".bak");
+
+                    RuleLoader.Save(_settings.NormsFolder, rules);
+                    var approved = rules.Count(RuleSet.IsApproved);
+                    TaskDialog.Show("Проверка норм",
+                        $"Правил загружено: {rules.Count}, из них утверждено: {approved}.\nСтарый файл сохранён рядом с суффиксом .bak.");
                 }
             }
             catch (Exception ex)

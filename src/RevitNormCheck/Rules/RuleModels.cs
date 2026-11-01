@@ -17,6 +17,9 @@ namespace RevitNormCheck.Rules
         [DataMember(Name = "id")] public string Id { get; set; }
         [DataMember(Name = "check")] public string Check { get; set; }
         [DataMember(Name = "title")] public string Title { get; set; }
+
+        // Подгруппа из списка проверок плагина, например "A.1".
+        [DataMember(Name = "subgroup")] public string Subgroup { get; set; }
         [DataMember(Name = "document")] public string Document { get; set; }
 
         // Редакция документа, например «2020, изм. 1». Правило относится только к ней.
@@ -37,6 +40,10 @@ namespace RevitNormCheck.Rules
         // в помещения с другим (например, из квартиры в коридор).
         [DataMember(Name = "fromRoomNameContains")] public List<string> FromRoomNameContains { get; set; }
         [DataMember(Name = "toRoomNameContains")] public List<string> ToRoomNameContains { get; set; }
+
+        // Кто и когда утвердил правило. Без утверждения плагин правило не применяет.
+        [DataMember(Name = "approvedBy")] public string ApprovedBy { get; set; }
+        [DataMember(Name = "approvedOn")] public string ApprovedOn { get; set; }
     }
 
     [DataContract]

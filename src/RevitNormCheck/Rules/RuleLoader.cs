@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Json;
+using System.Text;
 
 namespace RevitNormCheck.Rules
 {
@@ -11,8 +12,13 @@ namespace RevitNormCheck.Rules
         public List<Rule> Rules { get; } = new List<Rule>();
         public List<string> Errors { get; } = new List<string>();
 
+        public static bool IsApproved(Rule rule) => !string.IsNullOrWhiteSpace(rule.ApprovedBy);
+
+        // Только утверждённые правила этой проверки.
         public List<Rule> For(string checkId) =>
-            Rules.Where(r => string.Equals(r.Check, checkId, StringComparison.OrdinalIgnoreCase)).ToList();
+            Rules.Where(r => IsApproved(r) && string.Equals(r.Check, checkId, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        public List<Rule> Unapproved => Rules.Where(r => !IsApproved(r)).ToList();
     }
 
     public static class RuleLoader
@@ -43,6 +49,25 @@ namespace RevitNormCheck.Rules
                 set.Errors.Add("Не удалось прочитать " + path + ": " + ex.Message);
             }
             return set;
+        }
+
+        // Сохраняет правила в читаемом виде (с отступами) в rules.json папки.
+        public static void Save(string folder, IList<Rule> rules)
+        {
+            var file = new RuleFile { Rules = rules.ToList() };
+            string json;
+            using (var memory = new MemoryStream())
+            {
+                using (var writer = System.Runtime.Serialization.Json.JsonReaderWriterFactory
+                           .CreateJsonWriter(memory, Encoding.UTF8, false, true))
+                {
+                    new DataContractJsonSerializer(typeof(RuleFile)).WriteObject(writer, file);
+                }
+                json = Encoding.UTF8.GetString(memory.ToArray());
+            }
+            // Сериализатор экранирует «/» как «\/», для читаемости возвращаем обычный символ.
+            json = json.Replace("\\/", "/");
+            File.WriteAllText(Path.Combine(folder, FileName), json, new UTF8Encoding(false));
         }
     }
 }
