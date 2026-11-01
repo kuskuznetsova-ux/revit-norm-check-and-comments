@@ -1,0 +1,38 @@
+{
+  "rules": [
+    {
+      "id": "A.1.1-example",
+      "check": "door-width",
+      "title": "ПРИМЕР. Значения и пункт заполняются из ваших PDF",
+      "document": "ЗАПОЛНИТЬ: документ",
+      "clause": "ЗАПОЛНИТЬ: пункт",
+      "quote": "ЗАПОЛНИТЬ: короткая цитата из нормы",
+      "minWidthMm": 0,
+      "when": {
+        "roomNameContains": ["Коридор"],
+        "typeNameContains": [],
+        "levelContains": []
+      }
+    },
+    {
+      "id": "A.1.4-example",
+      "check": "door-swing",
+      "title": "ПРИМЕР. Открывание по направлению эвакуации",
+      "document": "ЗАПОЛНИТЬ: документ",
+      "clause": "ЗАПОЛНИТЬ: пункт",
+      "quote": "ЗАПОЛНИТЬ: короткая цитата из нормы",
+      "fromRoomNameContains": ["Квартира"],
+      "toRoomNameContains": ["Коридор", "Лестничная клетка"]
+    },
+    {
+      "id": "A.1.3-example",
+      "check": "stair-width",
+      "title": "ПРИМЕР. Ширина марша",
+      "document": "ЗАПОЛНИТЬ: документ",
+      "clause": "ЗАПОЛНИТЬ: пункт",
+      "quote": "ЗАПОЛНИТЬ: короткая цитата из нормы",
+      "minWidthMm": 0,
+      "when": { "levelContains": [], "typeNameContains": [] }
+    }
+  ]
+}

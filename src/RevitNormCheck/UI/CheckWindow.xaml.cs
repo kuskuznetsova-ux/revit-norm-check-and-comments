@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using RevitNormCheck.Checks;
-using RevitNormCheck.Export;
+using RevitNormCheck.Reporting;
 using RevitNormCheck.Settings;
 
 // У Revit API есть одноимённые типы, поэтому явно выбираем WPF.
@@ -271,44 +271,24 @@ namespace RevitNormCheck.UI
                 return;
             }
 
-            // Сами проверки и выгрузка в Excel добавляются следующим шагом.
-            TaskDialog.Show("Проверка норм",
-                $"Выбрано проверок: {_settings.EnabledCheckIds.Count}\n\nЗапуск проверок пока не реализован.");
-        }
-
-        private void ExportDoorsClick(object sender, RoutedEventArgs e)
-        {
-            SaveSettings();
-
-            if (_settings.ScopeMode == "Selected" && _settings.ScopeUniqueIds.Count == 0)
-            {
-                TaskDialog.Show("Проверка норм", "Отметьте листы или виды для выгрузки.");
-                return;
-            }
-
             try
             {
-                var rows = DoorExporter.Collect(_uiApp.ActiveUIDocument, _settings);
-                if (rows.Count == 0)
-                {
-                    TaskDialog.Show("Проверка норм", "В выбранной области двери не найдены.");
-                    return;
-                }
+                var findings = CheckRunner.Run(_uiApp.ActiveUIDocument, _settings);
 
                 using (var dialog = new System.Windows.Forms.SaveFileDialog())
                 {
                     dialog.Filter = "Excel (*.xlsx)|*.xlsx";
-                    dialog.FileName = "Двери_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm") + ".xlsx";
+                    dialog.FileName = "Замечания_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm") + ".xlsx";
                     if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
 
-                    XlsxWriter.Write(dialog.FileName, "Двери", DoorExporter.Headers, rows);
-                    TaskDialog.Show("Проверка норм", $"Выгружено дверей: {rows.Count}\n{dialog.FileName}");
+                    ReportWriter.Write(dialog.FileName, findings);
+                    TaskDialog.Show("Проверка норм", ReportWriter.Summary(findings) + "\n\n" + dialog.FileName);
                     try { System.Diagnostics.Process.Start(dialog.FileName); } catch { }
                 }
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("Проверка норм", "Ошибка выгрузки: " + ex.Message);
+                TaskDialog.Show("Проверка норм", "Ошибка: " + ex.Message);
             }
         }
 
