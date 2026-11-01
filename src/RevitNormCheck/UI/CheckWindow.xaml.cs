@@ -9,6 +9,10 @@ using Autodesk.Revit.UI;
 using RevitNormCheck.Checks;
 using RevitNormCheck.Settings;
 
+// У Revit API есть одноимённые типы, поэтому явно выбираем WPF.
+using Grid = System.Windows.Controls.Grid;
+using TextBox = System.Windows.Controls.TextBox;
+
 namespace RevitNormCheck.UI
 {
     public partial class CheckWindow : Window
